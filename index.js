@@ -37,6 +37,8 @@ function listDriveFolders(auth,res){
 			return
 		if(g.name.split(" - ").length != 2)
 			return
+		if(g.name.split(" - ")[1].split(" ").length < 2)
+			return;
 		listDriveActivity(auth, g.id, g.name, ppl)
 	});
 	let z=-1;
@@ -44,6 +46,8 @@ function listDriveFolders(auth,res){
 	    z++;
 	    var g = r.data.files[z];
 	    
+	    if(g.name.split(" - ")[1].split(" ").length < 2)
+			continue;
 	    if(g.name.split(" - ").length != 2)
 			continue;
 		if(g.mimeType != 'application/vnd.google-apps.folder')
@@ -163,12 +167,7 @@ app.get('/', (req, res) => {
 	  });
 	  
 	  res.redirect(authUrl)
-	  oAuth2Client.getToken(code, (err, token) => {
-		  if (err) return console.error('Error retrieving access token', err);
-		  
-		  oAuth2Client.setCredentials(token);
-		  listDriveFolders(oAuth2Client);
-		});
+	 
 	})
 app.get('/auth/', (req, res) => {
 	 if(!req.query.code)
@@ -213,10 +212,34 @@ app.get('/view/', (req, res) => {
 			
 		}
 	})
-	resp += "<br>&copy; HexF 2018";
+	resp += "<br>&copy; HexF 2019";
+	resp += "<br><a href=\"https://pcclasses.azurewebsites.net/\">Share this link</a>";
+	resp += "<br><a href=\"https://github.com/ComputerCandy/PCClasses/\">View this project on github</a>"
+	resp += "<br>Please note, these will not contain all of you class members, and I cannot guarantee they are 100% correct. Take everything in here with a pinch of salt";
+	res.send(resp);
+});
+
+app.get('/list/', (req, res) => {
+	
+	var people = [];
+	var resp = "<ul>";
+	Object.keys(teacherClass).forEach(function(g){
+		g.forEach(function(c){
+		    if(!people.includes(c))
+		        people.push(c)
+		})
+	})
+	
+	people.forEach(function(p){
+	    resp += "<li><a href=\"/view/?name=" + p + "\">" + p + "</a>";
+	});
+	resp += "</ul>"
+	resp += "<br>&copy; HexF 2019";
 	resp += "<br><a href=\"https://pcclasses.azurewebsites.net/\">Share this link</a>";
 	resp += "<br><a href=\"https://github.com/ComputerCandy/PCClasses/\">View this project on github</a>"
 	res.send(resp);
 });
+
+
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))
