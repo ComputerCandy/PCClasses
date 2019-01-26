@@ -9,8 +9,13 @@ const SCOPES = ['https://www.googleapis.com/auth/drive.activity.readonly',
  "https://www.googleapis.com/auth/userinfo.profile",
  "https://www.googleapis.com/auth/drive.readonly",
  "https://www.googleapis.com/auth/drive.metadata.readonly"];
-
+var peopll = null;
 var credentials = "";
+var footer = "";
+	footer += "<br>&copy; HexF 2019";
+	footer += "<br><a href=\"https://pcclasses.azurewebsites.net/\">Share this link</a>";
+	footer += "<br><a href=\"https://github.com/ComputerCandy/PCClasses/\">View this project on github</a>"
+	footer += "<br>Please note: These will not contain all of your class members, I cannot guarantee they are 100% correct and take everything in here with a pinch of salt.";
 fs.readFile('credentials.json', (err, content) => {
   if (err) return console.log('Error loading client secret file:', err);
 	credentials = JSON.parse(content);
@@ -60,7 +65,7 @@ function listDriveFolders(auth,res){
 	})
 }
 function getPersonById(id, ppl,cb){
-	
+	peopll = ppl;
 	var teacherName = "Unknown";
 	if(personDict[id])
 	{
@@ -212,19 +217,35 @@ app.get('/view/', (req, res) => {
 			
 		}
 	})
-	resp += "<br>&copy; HexF 2019";
-	resp += "<br><a href=\"https://pcclasses.azurewebsites.net/\">Share this link</a>";
-	resp += "<br><a href=\"https://github.com/ComputerCandy/PCClasses/\">View this project on github</a>"
-	resp += "<br>Please note, these will not contain all of you class members, and I cannot guarantee they are 100% correct. Take everything in here with a pinch of salt";
+	resp += footer;
 	res.send(resp);
 });
+
+app.get('/class/', (req, res) => {
+    if(!req.query.name)
+		return res.send("Invalid Class");
+	var resp = "";
+	var c = req.query.name;
+    getPersonById(c.split("/")[0] + "/" + c.split("/")[1],peopll,function(a){
+		            resp += "<h1>" + a + "'s " + c.split("/")[2] + " class</h1>";  
+		            resp += "<ul>";
+		            teacherClass[c].forEach(function(x){
+						resp += "<li>"+x+"</li>";
+					});
+					
+		            resp += "</ul>";
+		            resp += footer;
+		            res.send(resp);
+		        })
+		        
+    });
 
 app.get('/list/', (req, res) => {
 	
 	var people = [];
-	var resp = "<ul>";
+	var resp = "<h1>Students</h1><ul>";
 	Object.keys(teacherClass).forEach(function(g){
-		g.forEach(function(c){
+		teacherClass[g].forEach(function(c){
 		    if(!people.includes(c))
 		        people.push(c)
 		})
@@ -233,10 +254,26 @@ app.get('/list/', (req, res) => {
 	people.forEach(function(p){
 	    resp += "<li><a href=\"/view/?name=" + p + "\">" + p + "</a>";
 	});
+	resp += "</ul>";
+	resp += "<h6>Count: " + people.length + "</h6>";
+	var g = [];
+	resp += "<h1>Teachers</h1><ul>";
+	Object.keys(teacherClass).forEach(function(c){
+		    if(!g.includes(c)){
+		        g.push(c);
+		        getPersonById(c.split("/")[0] + "/" + c.split("/")[1],peopll,function(a){
+		            resp += "<li><a href=\"/class/?name=" + c + "\">" + a + " with " + c.split("/")[2] + "</a>";    
+		        })
+		        
+		    }
+	})
+	
+	
+	
 	resp += "</ul>"
-	resp += "<br>&copy; HexF 2019";
-	resp += "<br><a href=\"https://pcclasses.azurewebsites.net/\">Share this link</a>";
-	resp += "<br><a href=\"https://github.com/ComputerCandy/PCClasses/\">View this project on github</a>"
+	resp += "<h6>Count: " + g.length + "</h6>";
+	
+	resp += footer;
 	res.send(resp);
 });
 
